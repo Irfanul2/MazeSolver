@@ -46,6 +46,6 @@ A browser-based web application that solves a maze using the **Breadth-First Sea
   - Export path as JSON or image
 
 🙋‍♂️ Author
-Rajesh Kumar
-📧 [rk424036@gmail.com]
-🌐 [LinkedIn](https://www.linkedin.com/in/rajesh-kumar-791679297/) 
+Irfanul Hoda
+📧 [irfanulhoda2@gmail.com]
+ 
