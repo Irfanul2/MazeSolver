@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      text-align: center;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #333333;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      text-align: left;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0 20px 0;
+      border: 1px solid #308e5d;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #185446;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a05cc8;
+    }
+    .output-box {
+      border: 1px solid #2d9896;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 20px;
+      background-color: #428e46;
+    }
+    .maze-cell {
+      border: 1px solid #145d2c;
+      display: inline-block;
+      text-align: center;
+      line-height: 30px;
+      width: 30px;
+      height: 30px;
+    }
+    .step-cell {
+      background-color: rgb(98, 109, 48);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Puzzle Solver</h1>
+    <label for="mazeInput">Enter the maze with 0 and 1:</label>
+    <textarea id="mazeInput" rows="5" cols="50"></textarea>
+    <label for="startRow">Start Row:</label>
+    <input type="number" id="startRow" value="0">
+    <label for="startCol">Start Column:</label>
+    <input type="number" id="startCol" value="0">
+    <label for="endRow">End Row:</label>
+    <input type="number" id="endRow" value="4">
+    <label for="endCol">End Column:</label>
+    <input type="number" id="endCol" value="4"><br>
+    <button onclick="solveMaze()">Find Path</button>
+    <h2>Shortest Path:</h2>
+    <div id="shortestPathOutput" class="output-box"></div>
+    <h2>Steps Taken:</h2>
+    <div id="stepsOutput" class="output-box"></div>
+    <div id="mazeContainer"></div>
+  </div>
+
+  <script>
+    function parseMazeInput(input) {
+      return input.trim().split('\n').map(row => row.trim().split(' '));
+    }
+
+    function formatPath(path) {
+      return path.map(step => `${step.join(',')}`).join(' -> ');
+    }
+
+    function formatSteps(steps) {
+      return steps.join(', ');
+    }
+
+    function findShortestPath(maze, startRow, startCol, endRow, endCol) {
+      const queue = [{ position: [startRow, startCol], path: [], steps: [] }];
+      const visited = new Set();
+
+      const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+      const directionNames = ['up', 'down', 'left', 'right'];
+
+      while (queue.length > 0) {
+        const { position, path, steps } = queue.shift();
+        const [row, col] = position;
+
+        if (row === endRow && col === endCol) {
+          return { path: [...path, [row, col]], steps };
+        }
+
+        for (let i = 0; i < directions.length; i++) {
+          const [rowDiff, colDiff] = directions[i];
+          const newRow = row + rowDiff;
+          const newCol = col + colDiff;
+
+          if (
+            newRow >= 0 &&
+            newRow < maze.length &&
+            newCol >= 0 &&
+            newCol < maze[0].length &&
+            maze[newRow][newCol] !== '0' &&
+            !visited.has(`${newRow},${newCol}`)
+          ) {
+            queue.push({
+              position: [newRow, newCol],
+              path: [...path, [row, col]],
+              steps: [...steps, directionNames[i]],
+            });
+            visited.add(`${newRow},${newCol}`);
+          }
+        }
+      }
+
+      return { path: [], steps: [] }; // If no path is found
+    }
+
+    function displayMazeWithSteps(maze, path) {
+      const mazeContainer = document.getElementById('mazeContainer');
+      mazeContainer.innerHTML = ''; // Clear previous maze
+
+      for (let i = 0; i < maze.length; i++) {
+        const rowDiv = document.createElement('div');
+        for (let j = 0; j < maze[i].length; j++) {
+          const cellDiv = document.createElement('div');
+          cellDiv.textContent = maze[i][j];
+          cellDiv.classList.add('maze-cell');
+          if (path.some(step => step[0] === i && step[1] === j)) {
+            cellDiv.classList.add('step-cell');
+          }
+          rowDiv.appendChild(cellDiv);
+        }
+        mazeContainer.appendChild(rowDiv);
+      }
+    }
+
+    function solveMaze() {
+      const mazeInput = document.getElementById('mazeInput').value;
+      const startRow = parseInt(document.getElementById('startRow').value);
+      const startCol = parseInt(document.getElementById('startCol').value);
+      const endRow = parseInt(document.getElementById('endRow').value);
+      const endCol = parseInt(document.getElementById('endCol').value);
+      const maze = parseMazeInput(mazeInput);
+      const result = findShortestPath(maze, startRow, startCol, endRow, endCol);
+      if (result.path.length === 0) {
+        document.getElementById('shortestPathOutput').innerText = "Path not found";
+        document.getElementById('stepsOutput').innerText = "";
+        document.getElementById('mazeContainer').innerHTML = ""; // Clear maze display
+      } else {
+        document.getElementById('shortestPathOutput').innerText = "Shortest path: " + formatPath(result.path);
+        document.getElementById('stepsOutput').innerText = "Steps taken: " + formatSteps(result.steps);
+        displayMazeWithSteps(maze, result.path);
+      }
+    }
+  </script>
+</body>
+</html>
